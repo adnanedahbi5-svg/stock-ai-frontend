@@ -1,0 +1,110 @@
+/* table pagination style */
+
+.container-fluid .table-responsive .paginate_button {
+  font-size: 1rem;
+  height: 2.5rem;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  border: 0.0625rem solid var(--primary);
+  border-radius: 2.8125rem;
+  padding: 0 0.85rem;
+  line-height: 2.5rem;
+  margin: 0 0.625rem;
+  display: inline-block;
+  color: var(--primary) !important;
+  cursor: pointer;
+}
+
+.container-fluid .table-responsive .paginate_button:hover {
+  background-color: var(--primary) !important;
+  color: #fff !important;
+}
+.container-fluid .table-responsive .current {
+  background-color: var(--primary) !important;
+  color: #fff !important;
+}
+.container-fluid .table-responsive .dataTables_paginate {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+.container-fluid .table-responsive .basic-data_table_pagination {
+  display: flex;
+}
+.container-fluid .table-responsive table thead tr th::after {
+  content: "\f0dc";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  background-image: none;
+  margin-left: 5px;
+  font-size: calc(100% - 2px);
+  opacity: 0.5;
+}
+.container-fluid .table-responsive table thead tr .icon_none::after {
+  display: none !important;
+}
+
+#user-tbl_filter {
+  color: #888888;
+  border-radius: 1rem;
+  margin-bottom: 0.35rem;
+  padding-top: 1rem;
+}
+#example_wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#example_filter {
+  display: flex;
+  align-items: center;
+}
+.table-data-base-search {
+  border: 0.0625rem solid #e2e2e2;
+  padding: 0.3rem 0.5rem;
+  color: #715d5d;
+  border-radius: 0.3125rem;
+}
+
+@media screen and (max-width: 775px) {
+  .container-fluid .table-responsive .basic-data_table_pagination {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  #example_filter {
+    margin-top: 1.25rem;
+  }
+}
+@media screen and (max-width: 650px) {
+  #example_wrapper {
+    flex-direction: column;
+    align-items: start;
+  }
+}
+@media screen and (max-width: 370px) {
+  #example_filter {
+    flex-direction: column;
+    align-items: start;
+  }
+}
+
+/* select option 2 style */
+.select_option_2 .vs__dropdown-option:hover {
+  background-color: var(--primary) !important;
+}
+.select_option_2 .vs__dropdwn-option--selected {
+  background-color: var(--primary) !important;
+}
+.select_option_2 .vs__dropdwn-option--highlight {
+  background-color: var(--primary) !important;
+}
+
+/* date picker */
+
+.dp__input_readonly,
+.form-control[readonly] {
+  background-color: var(--card) !important;
+  color: var(--text-dark) !important;
+  border: 1px solid var(--border);
+}

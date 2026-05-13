@@ -1,0 +1,171 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+
+interface PaginationData {
+    current_page: number;
+    last_page: number;
+    from?: number | null;
+    to?: number | null;
+    total: number;
+    per_page: number;
+}
+
+const props = defineProps<{
+    pagination: PaginationData;
+}>();
+
+const emit = defineEmits(['page-changed']);
+
+const onPageClick = (page: number | string) => {
+    if (typeof page === 'number' && page !== props.pagination.current_page) {
+        emit('page-changed', page);
+    }
+};
+
+const onPreviousClick = () => {
+    if (props.pagination.current_page > 1) {
+        emit('page-changed', props.pagination.current_page - 1);
+    }
+};
+
+const onNextClick = () => {
+    if (props.pagination.current_page < props.pagination.last_page) {
+        emit('page-changed', props.pagination.current_page + 1);
+    }
+};
+
+// Fallback calculations for "Showing X to Y" if from/to are missing
+const showingFrom = computed(() => {
+    if (props.pagination.from !== undefined && props.pagination.from !== null) return props.pagination.from;
+    return props.pagination.total === 0 ? 0 : (props.pagination.current_page - 1) * props.pagination.per_page + 1;
+});
+
+const showingTo = computed(() => {
+    if (props.pagination.to !== undefined && props.pagination.to !== null) return props.pagination.to;
+    return Math.min(props.pagination.current_page * props.pagination.per_page, props.pagination.total);
+});
+
+// Logic to generate page numbers with ellipsis (e.g., [1, '...', 4, 5, 6, '...', 10])
+const pages = computed(() => {
+    const current = props.pagination.current_page;
+    const last = props.pagination.last_page;
+    const delta = 2; // Number of pages to show around current page
+    const range = [];
+    const rangeWithDots = [];
+    let l;
+
+    range.push(1);
+    for (let i = current - delta; i <= current + delta; i++) {
+        if (i < last && i > 1) {
+            range.push(i);
+        }
+    }
+    if (last > 1) {
+        range.push(last);
+    }
+
+    for (let i of range) {
+        if (l) {
+            if (i - l === 2) {
+                rangeWithDots.push(l + 1);
+            } else if (i - l !== 1) {
+                rangeWithDots.push('...');
+            }
+        }
+        rangeWithDots.push(i);
+        l = i;
+    }
+
+    return rangeWithDots;
+});
+</script>
+
+<template>
+    <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-lg shadow-sm">
+        <!-- Mobile View: Simple Previous/Next buttons -->
+        <div class="flex flex-1 justify-between sm:hidden">
+            <button
+                @click="onPreviousClick"
+                :disabled="pagination.current_page === 1"
+                class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+                Previous
+            </button>
+            <button
+                @click="onNextClick"
+                :disabled="pagination.current_page === pagination.last_page"
+                class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+                Next
+            </button>
+        </div>
+
+        <!-- Desktop View: Showing results + Page numbers -->
+        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing
+                    <span class="font-medium">{{ showingFrom }}</span>
+                    to
+                    <span class="font-medium">{{ showingTo }}</span>
+                    of
+                    <span class="font-medium">{{ pagination.total }}</span>
+                    results
+                </p>
+            </div>
+            <div>
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    <!-- Previous Button Arrow -->
+                    <button
+                        @click="onPreviousClick"
+                        :disabled="pagination.current_page === 1"
+                        class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+
+                    <!-- Page Numbers template -->
+                    <template v-for="(page, index) in pages" :key="index">
+                        <!-- Ellipsis -->
+                        <span
+                            v-if="page === '...'"
+                            class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0"
+                        >
+                            ...
+                        </span>
+                        <!-- Actual Page Button -->
+                        <button
+                            v-else
+                            @click="onPageClick(page)"
+                            :aria-current="page === pagination.current_page ? 'page' : undefined"
+                            :class="[
+                                page === pagination.current_page
+                                    ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0',
+                                'relative inline-flex items-center px-4 py-2 text-sm font-semibold transition-colors'
+                            ]"
+                        >
+                            {{ page }}
+                        </button>
+                    </template>
+
+                    <!-- Next Button Arrow -->
+                    <button
+                        @click="onNextClick"
+                        :disabled="pagination.current_page === pagination.last_page"
+                        class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </div>
+</template>
+
