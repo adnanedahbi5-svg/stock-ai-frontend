@@ -1141,6 +1141,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { defineComponent } from 'vue'
 // @ts-ignore
 import VueApexCharts from 'vue3-apexcharts'

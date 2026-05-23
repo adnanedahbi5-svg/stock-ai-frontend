@@ -1069,6 +1069,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { defineComponent } from 'vue'
 import { RouterLink } from 'vue-router'
 // @ts-ignore

@@ -1,0 +1,1 @@
+import{B as e,w as t,y as n}from"./vue.runtime.esm-bundler-YLrqT69y.js";import{d as r}from"./index-DwHbFQZ2.js";var i=t({name:`emptyPage`,setup(){return{}}}),a={class:`vh-100`};function o(t,r,i,o,s,c){return e(),n(`div`,a)}var s=r(i,[[`render`,o]]);export{s as default};

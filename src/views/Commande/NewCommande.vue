@@ -7,7 +7,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useProductStore } from "@/stores/productStore";
 import { storeToRefs } from "pinia";
 import api from "@/services/api";
-
+import { useRoute } from "vue-router";
+const route = useRoute();
 const router = useRouter();
 const commandeStore = useCommandeStore();
 const authStore = useAuthStore();
@@ -88,6 +89,14 @@ onMounted(async () => {
     productStore.fetchProductsForSelect();
   } catch (e) {
     console.error("Error fetching products", e);
+  }
+  if (route.query.product_id) {
+    details.value[0] = {
+      product_id: Number(route.query.product_id),
+      quantity: Number(route.query.quantity) || 1,
+      unit_price_ht: "",
+      tax_rate: 20,
+    };
   }
 });
 

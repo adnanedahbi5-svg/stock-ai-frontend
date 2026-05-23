@@ -169,6 +169,8 @@
                 v-for="alert in store.stockAlerts"
                 :key="alert.id"
                 :class="{ 'row--critical': alert.quantiteStock <= 0 }"
+                style="cursor: pointer"
+                @click="goToNewCommande(alert)"
               >
                 <td>
                   <span class="product-name">{{ alert.nom }}</span>
@@ -275,10 +277,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, onMounted } from "vue";
+import { defineComponent, computed, onMounted ,onUnmounted } from "vue";
 import { useDashboardStore } from "@/stores/DashboardStore";
 import VueApexCharts from "vue3-apexcharts";
 import type { ApexOptions } from "apexcharts";
+import { useRouter } from "vue-router";
 
 // ─── Tiny inline icon components ────────────────────────────────────────────
 
@@ -339,7 +342,26 @@ export default defineComponent({
   setup() {
     const store = useDashboardStore();
 
-    onMounted(() => store.fetchIfStale());
+    onMounted(() => {
+      store.fetchDashboard()
+      store.startPolling(60_000) // refresh every 60s
+    })
+    onUnmounted(() => {
+      store.stopPolling()
+    })
+    const router = useRouter();
+
+    const goToNewCommande = (alert: any) => {
+      router.push({
+        path: "/commandes/new",
+        query: {
+          product_id: alert.id,
+          product_name: alert.nom,
+          quantity: String(alert.seuilAlerte - alert.quantiteStock + 1),
+          seuil: String(alert.seuilAlerte),
+        },
+      });
+    };
 
     const lastUpdated = computed(() => {
       if (!store.lastFetch) return "—";
@@ -364,19 +386,21 @@ export default defineComponent({
       }).format(new Date(iso));
 
     // Chart options
-    const ordersChartOptions: ApexOptions = {
-      ...chartBase,
-      chart: { ...chartBase.chart, type: "line" as const, id: "orders" },
-      colors: ["#3b82f6", "#10b981"],
-      stroke: { curve: "smooth" as const, width: [3, 2] },
-      markers: { size: 4 },
-      xaxis: { categories: store.ordersChartCategories },
-      yaxis: [
-        { title: { text: "Commandes" } },
-        { opposite: true, title: { text: "Revenu (MAD)" } },
-      ],
-      legend: { position: "top" as const },
-    };
+    const ordersChartOptions = computed(
+      (): ApexOptions => ({
+        ...chartBase,
+        chart: { ...chartBase.chart, type: "line" as const, id: "orders" },
+        colors: ["#3b82f6", "#10b981"],
+        stroke: { curve: "smooth" as const, width: [3, 2] },
+        markers: { size: 4 },
+        xaxis: { categories: store.ordersChartCategories },
+        yaxis: [
+          { title: { text: "Commandes" } },
+          { opposite: true, title: { text: "Revenu (MAD)" } },
+        ],
+        legend: { position: "top" as const },
+      })
+    );
 
     const donutChartOptions = computed(
       (): ApexOptions => ({
@@ -397,14 +421,16 @@ export default defineComponent({
       }),
     );
 
-    const movementsChartOptions: ApexOptions = {
-      ...chartBase,
-      chart: { ...chartBase.chart, type: "bar" as const, stacked: false },
-      colors: ["#10b981", "#ef4444"],
-      plotOptions: { bar: { borderRadius: 4, columnWidth: "55%" } },
-      xaxis: { categories: store.movementsChartCategories },
-      legend: { position: "top" as const },
-    };
+    const movementsChartOptions = computed(
+      (): ApexOptions => ({
+        ...chartBase,
+        chart: { ...chartBase.chart, type: "bar" as const, stacked: false },
+        colors: ["#10b981", "#ef4444"],
+        plotOptions: { bar: { borderRadius: 4, columnWidth: "55%" } },
+        xaxis: { categories: store.movementsChartCategories },
+        legend: { position: "top" as const },
+      })
+    );
 
     const iconMap: Record<string, object> = {
       box: IconBox,
@@ -424,6 +450,7 @@ export default defineComponent({
       ordersChartOptions,
       donutChartOptions,
       movementsChartOptions,
+      goToNewCommande,
     };
   },
 });
@@ -434,25 +461,31 @@ export default defineComponent({
    Design tokens
 ═══════════════════════════════════════════════════ */
 .dashboard-root {
-  --clr-bg: #f4f6fb;
-  --clr-surface: #ffffff;
-  --clr-border: #e8ecf2;
-  --clr-text: #1a1f36;
-  --clr-muted: #6b7280;
+  --clr-bg-start: #f8fafc;
+  --clr-bg-end: #eff6ff;
+  --clr-surface: rgba(255, 255, 255, 0.75);
+  --clr-border: rgba(255, 255, 255, 0.5);
+  --clr-text: #0f172a;
+  --clr-muted: #64748b;
   --clr-blue: #3b82f6;
   --clr-green: #10b981;
-  --clr-red: #ef4444;
+  --clr-red: #f43f5e;
   --clr-orange: #f59e0b;
   --clr-purple: #8b5cf6;
   --clr-yellow: #eab308;
-  --radius: 12px;
-  --shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
-  --transition: 0.2s ease;
+  --radius: 20px;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  --shadow-hover: 0 20px 50px rgba(59, 130, 246, 0.08);
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: var(--clr-bg);
+  font-family: "Inter", "Outfit", "Segoe UI", system-ui, sans-serif;
+  background: linear-gradient(
+    135deg,
+    var(--clr-bg-start) 0%,
+    var(--clr-bg-end) 100%
+  );
   min-height: 100vh;
-  padding: 28px 32px;
+  padding: 32px 40px;
   color: var(--clr-text);
   box-sizing: border-box;
 }
@@ -537,25 +570,33 @@ export default defineComponent({
 .refresh-btn {
   display: flex;
   align-items: center;
-  gap: 7px;
-  background: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 0.85rem;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 0.88rem;
   cursor: pointer;
   color: var(--clr-text);
-  font-weight: 500;
-  transition:
-    box-shadow var(--transition),
-    opacity var(--transition);
+  font-weight: 600;
+  transition: all var(--transition);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 .refresh-btn:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.12);
+  border-color: #fff;
+}
+.refresh-btn:active {
+  transform: translateY(0);
 }
 .refresh-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -572,20 +613,24 @@ export default defineComponent({
   position: relative;
   overflow: hidden;
   background: var(--clr-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: var(--radius);
-  padding: 22px 20px;
+  padding: 24px 20px;
   box-shadow: var(--shadow);
   display: flex;
   align-items: center;
   gap: 16px;
-  animation: slideUp 0.35s ease both;
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
   transition:
     transform var(--transition),
     box-shadow var(--transition);
 }
 .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(255, 255, 255, 1);
 }
 
 @keyframes slideUp {
@@ -600,13 +645,14 @@ export default defineComponent({
 }
 
 .kpi-card__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);
 }
 .kpi-card__label {
   font-size: 0.78rem;
@@ -708,9 +754,18 @@ export default defineComponent({
 ═══════════════════════════════════════════════════ */
 .card {
   background: var(--clr-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  transition:
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+.card:hover {
+  box-shadow: var(--shadow-hover);
 }
 .card__header {
   display: flex;
@@ -782,13 +837,13 @@ export default defineComponent({
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
 }
 .data-table thead {
-  background: #f8fafc;
+  background: rgba(248, 250, 252, 0.4);
 }
 .data-table th {
-  padding: 11px 16px;
+  padding: 14px 16px;
   text-align: left;
   font-weight: 600;
   font-size: 0.78rem;
@@ -798,18 +853,21 @@ export default defineComponent({
   border-bottom: 1px solid var(--clr-border);
 }
 .data-table td {
-  padding: 11px 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--clr-border);
   vertical-align: middle;
 }
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
+.data-table tbody tr {
+  transition: background var(--transition);
+}
 .data-table tbody tr:hover {
-  background: #fafbfc;
+  background: rgba(241, 245, 249, 0.4);
 }
 .data-table tbody tr.row--critical {
-  background: #fff5f5;
+  background: rgba(254, 242, 242, 0.5);
 }
 
 .product-name {
@@ -846,6 +904,10 @@ export default defineComponent({
   background: #fffbeb;
   color: var(--clr-orange);
 }
+.pill--green {
+  background: #f0fdf4;
+  color: var(--clr-green);
+}
 
 /* ═══════════════════════════════════════════════════
    Top Products
@@ -863,17 +925,19 @@ export default defineComponent({
 }
 
 .rank {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: #f1f5f9;
-  color: var(--clr-muted);
-  font-size: 0.78rem;
+  background: rgba(241, 245, 249, 0.6);
+  color: var(--clr-blue);
+  font-size: 0.82rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 .tp-info {
   flex: 1;
@@ -889,15 +953,16 @@ export default defineComponent({
 }
 .tp-bar-wrap {
   height: 6px;
-  background: #f1f5f9;
+  background: rgba(241, 245, 249, 0.6);
   border-radius: 3px;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .tp-bar {
   height: 100%;
   background: linear-gradient(90deg, var(--clr-blue), var(--clr-purple));
   border-radius: 3px;
-  transition: width 0.6s ease;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .tp-moved {
   font-size: 0.8rem;
@@ -919,9 +984,17 @@ export default defineComponent({
 }
 .activity-item {
   display: flex;
-  gap: 12px;
-  padding: 10px 0;
+  gap: 14px;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--clr-border);
+  transition:
+    background var(--transition),
+    transform var(--transition);
+  border-radius: 8px;
+}
+.activity-item:hover {
+  background: rgba(248, 250, 252, 0.4);
+  transform: translateX(4px);
 }
 .activity-item:last-child {
   border-bottom: none;

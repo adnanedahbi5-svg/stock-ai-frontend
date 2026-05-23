@@ -1,29 +1,48 @@
 <script setup lang="ts">
-import { onMounted, computed } from "vue";
+import { onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/userStore";
 import { useAuthStore } from "@/stores/authStore";
 import { storeToRefs } from "pinia";
+import defaultAvatar from "@/assets/images/profile/pic1.jpg";
 
-const route     = useRoute();
-const router    = useRouter();
+const route = useRoute();
+const router = useRouter();
 const userStore = useUserStore();
 const authStore = useAuthStore();
-const { currentUser: storeUser, userLoading: storeLoading } = storeToRefs(userStore);
+const { currentUser: storeUser, userLoading: storeLoading } =
+  storeToRefs(userStore);
 const { user: authUser } = storeToRefs(authStore);
 
 const isAuthProfile = computed(() => !route.params.id);
-const currentUser = computed(() => isAuthProfile.value ? authUser.value : storeUser.value);
-const userLoading = computed(() => isAuthProfile.value ? false : storeLoading.value);
+const currentUser = computed(() =>
+  isAuthProfile.value ? authUser.value : storeUser.value,
+);
+const userLoading = computed(() =>
+  isAuthProfile.value ? false : storeLoading.value,
+);
 
-onMounted(() => {
+// onMounted(() => {
+//   if (!isAuthProfile.value) {
+//     const id = Number(route.params.id);
+//     if (!isNaN(id)) {
+//       userStore.fetchUser(id);
+//     }
+//   }
+// });
+
+const loadUser = () => {
   if (!isAuthProfile.value) {
     const id = Number(route.params.id);
     if (!isNaN(id)) {
       userStore.fetchUser(id);
     }
   }
-});
+};
+
+onMounted(loadUser);
+
+watch(() => route.params.id, loadUser);
 
 const goEdit = () => {
   if (currentUser.value) {
@@ -41,10 +60,11 @@ const goBack = () => {
 
 <template>
   <div class="container-fluid">
-
     <!-- HEADER -->
     <div class="d-flex align-items-center mb-4">
-      <h3 class="me-auto">{{ isAuthProfile ? 'My Profile' : 'User Profile' }}</h3>
+      <h3 class="me-auto">
+        {{ isAuthProfile ? "My Profile" : "User Profile" }}
+      </h3>
       <button class="btn btn-secondary light btn-sm me-2" @click="goBack">
         <i class="fas fa-arrow-left me-1"></i> Back
       </button>
@@ -66,7 +86,12 @@ const goBack = () => {
           <div class="card-header border-0 flex-wrap align-items-start">
             <div class="col-md-8">
               <div class="user d-sm-flex d-block pe-md-5 pe-0">
-                <img src="../../assets/images/profile/pic1.jpg" alt="avatar" />
+                <img
+                  :src="currentUser.profile_picture || defaultAvatar"
+                  alt="avatar"
+                  class="rounded-circle shadow-sm"
+                  style="width: 80px; height: 80px; object-fit: cover"
+                />
                 <div class="ms-sm-3 ms-0 me-md-5 md-0">
                   <h5 class="mb-1">
                     <span class="text-dark">{{ currentUser.name }}</span>
@@ -90,7 +115,9 @@ const goBack = () => {
             </div>
 
             <div class="col-md-4 col-12 text-end">
-              <span :class="`badge badge-${currentUser.role === 'administrateur' ? 'danger' : 'primary'} light`">
+              <span
+                :class="`badge badge-${currentUser.role === 'administrateur' ? 'danger' : 'primary'} light`"
+              >
                 {{ currentUser.role }}
               </span>
             </div>
@@ -101,19 +128,37 @@ const goBack = () => {
             <div class="row">
               <div class="col-xl-6 col-md-6">
                 <ul class="list-style-1">
-                  <li><label class="custom-label-2 mb-0">ID :</label>{{ currentUser.id }}</li>
-                  <li><label class="custom-label-2 mb-0">Full Name :</label>{{ currentUser.name }}</li>
-                  <li><label class="custom-label-2 mb-0">Email :</label>{{ currentUser.email }}</li>
-                  <li><label class="custom-label-2 mb-0">Role :</label>{{ currentUser.role }}</li>
-                  <li><label class="custom-label-2 mb-0">Secteur :</label>{{ currentUser.secteur ?? '-' }}</li>
+                  <li>
+                    <label class="custom-label-2 mb-0">ID :</label
+                    >{{ currentUser.id }}
+                  </li>
+                  <li>
+                    <label class="custom-label-2 mb-0">Full Name :</label
+                    >{{ currentUser.name }}
+                  </li>
+                  <li>
+                    <label class="custom-label-2 mb-0">Email :</label
+                    >{{ currentUser.email }}
+                  </li>
+                  <li>
+                    <label class="custom-label-2 mb-0">Role :</label
+                    >{{ currentUser.role }}
+                  </li>
+                  <li>
+                    <label class="custom-label-2 mb-0">Secteur :</label
+                    >{{ currentUser.secteur ?? "-" }}
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
 
-          <div class="card-footer d-flex flex-wrap justify-content-end align-items-center gap-2">
+          <div
+            class="card-footer d-flex flex-wrap justify-content-end align-items-center gap-2"
+          >
             <button class="btn btn-secondary btn-sm" @click="goBack">
-              <i class="fas fa-arrow-left me-1"></i> {{ isAuthProfile ? 'Back to Dashboard' : 'Back to List' }}
+              <i class="fas fa-arrow-left me-1"></i>
+              {{ isAuthProfile ? "Back to Dashboard" : "Back to List" }}
             </button>
             <button class="btn btn-primary btn-sm" @click="goEdit">
               <i class="fas fa-pencil-alt me-1"></i> Edit User
@@ -127,9 +172,10 @@ const goBack = () => {
     <div v-else class="text-center py-5 text-muted">
       <i class="fas fa-user-slash fa-3x mb-3"></i>
       <p>User not found.</p>
-      <button class="btn btn-secondary btn-sm" @click="goBack">{{ isAuthProfile ? 'Back to Dashboard' : 'Back to List' }}</button>
+      <button class="btn btn-secondary btn-sm" @click="goBack">
+        {{ isAuthProfile ? "Back to Dashboard" : "Back to List" }}
+      </button>
     </div>
-
   </div>
 </template>
 

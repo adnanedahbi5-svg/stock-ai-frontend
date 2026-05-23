@@ -19,6 +19,14 @@ const form = reactive({
 
 const errors = ref<Record<string, string[]>>({});
 const successMsg = ref("");
+const profilePic = ref<File | null>(null);
+
+const handleFileUpload = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    profilePic.value = target.files[0];
+  }
+};
 
 const goBack = () => router.push(`/users`);
 
@@ -38,6 +46,10 @@ const submit = async () => {
   const result = await userStore.createUser(payload);
 
   if (result && result.success) {
+    if (profilePic.value && result.data && result.data.id) {
+      await userStore.uploadProfilePicture(profilePic.value, result.data.id);
+    }
+
     successMsg.value = "User created successfully!";
     setTimeout(() => {
         if (result.data && result.data.id) {
@@ -113,6 +125,17 @@ const submit = async () => {
                     required
                   />
                   <div v-if="errors.email" class="invalid-feedback">{{ errors.email[0] }}</div>
+                </div>
+
+                <!-- Profile Picture -->
+                <div class="form-group mb-4">
+                  <label class="form-label">Profile Picture</label>
+                  <input
+                    type="file"
+                    class="form-control"
+                    accept="image/*"
+                    @change="handleFileUpload"
+                  />
                 </div>
 
                 <!-- Role -->

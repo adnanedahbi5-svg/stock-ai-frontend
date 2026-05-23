@@ -4,19 +4,21 @@
     <div class="custom-tab-1">
       <ul class="nav nav-tabs">
         <li class="nav-item">
-          <a class="nav-link" data-bs-toggle="tab" href="#notes">Notes</a>
+          <a class="nav-link" data-bs-toggle="tab" href="#history">History</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" data-bs-toggle="tab" href="#alerts">Alerts</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active" data-bs-toggle="tab" href="#chat">Chat</a>
+          <a class="nav-link active" data-bs-toggle="tab" href="#chat">
+            🤖 AI Chat
+          </a>
         </li>
       </ul>
       <div class="tab-content">
         <Chats />
         <Alerts />
-        <Notes />
+        <History />
       </div>
     </div>
   </div>
@@ -27,7 +29,7 @@ import { defineComponent } from 'vue'
 import { useStore } from '@/stores/Store'
 import Chats from './Chats.vue'
 import Alerts from './Alerts.vue'
-import Notes from './Notes.vue'
+import History from './History.vue'
 import { storeToRefs } from 'pinia'
 
 export default defineComponent({
@@ -44,7 +46,7 @@ export default defineComponent({
       this.openChatbox = false
     }
   },
-  components: { Chats, Alerts, Notes }
+  components: { Chats, Alerts, History }
 })
 </script>
 

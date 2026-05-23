@@ -87,5 +87,33 @@ export const useUserStore = defineStore("users", {
                 console.error("Error deleting user:", error);
             }
         },
+        async uploadProfilePicture(file: File, userId?: number) {
+            this.saving = true;
+            try {
+                const formData = new FormData();
+                formData.append("image", file);
+
+                const endpoint = userId
+                    ? `users/${userId}/profile-picture`
+                    : "users/profile-picture";
+
+                const res = await api.post(endpoint, formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+
+                if (this.currentUser && this.currentUser.id === userId) {
+                    this.currentUser.profile_picture = res.data?.profile_picture;
+                }
+
+                return { success: true, data: res.data };
+            } catch (error: any) {
+                return {
+                    success: false,
+                    errors: error.response?.data?.errors ?? {},
+                };
+            } finally {
+                this.saving = false;
+            }
+        },
     },
 });

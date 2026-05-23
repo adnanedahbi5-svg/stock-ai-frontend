@@ -671,6 +671,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 // @ts-ignore
 import {
   AllProject,
